@@ -104,3 +104,43 @@ function vaildUrlCheck(url) {
         return false;
     }
 }
+
+
+
+var AWS = require('aws-sdk');
+
+AWS.config.loadFromPath(require('path').join(__dirname, './aws-config.json'));
+const BUCKET = '';
+var s3 = new AWS.S3();
+
+// firebase deploy --only functions
+exports.dbDataDeleted = functions.database.ref('/users/{uid}/bucket/{pushId}').onDelete(async (snapshot, context) => {
+    // Exit when the data is deleted.
+    let fileName = context.params.pushId; // db key
+    let s3URL = snapshot.val(); // db val
+
+    var params = {
+        Bucket: BUCKET, 
+        Delete: { // required
+            Objects: [ // required
+            {
+                Key: fileName + ".gif" // gif
+            },
+            {
+                Key: fileName + ".mp4" // mp4
+            }
+            ],
+        },
+    };
+
+    await s3.deleteObjects(params, (err, data) => {
+        if (err)  {
+            console.log(err, err.stack); // an error occurred
+        }
+        else {
+            console.log(data);           // successful response
+        }   
+    });
+   
+});
+
